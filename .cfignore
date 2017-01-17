@@ -1,3 +1,6 @@
-node_modules
-public/vendor
-vcap-local.json
+node_modules/
+.idea/
+coverage
+npm-debug.log
+readme_images
+test

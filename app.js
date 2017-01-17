@@ -1,65 +1,97 @@
-var express = require('express');
-var cfenv   = require('cfenv');
-var favicon = require('serve-favicon');
-var app     = express();
-var bodyParser = require('body-parser')
+/**
+ * Copyright 2015 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-// load local VCAP configuration
-var vcapLocal = null
-try {
-  vcapLocal = require("./vcap-local.json");
-  console.log("APP - Loaded local VCAP", vcapLocal);
-} catch (e) {
-  console.error(e);
-}
+'use strict';
 
-// This option property is ignored if not running locally.
-var options = vcapLocal ? { vcap: vcapLocal } : {}
-var appEnv = cfenv.getAppEnv(options);
+var express = require('express'); // app server
+var bodyParser = require('body-parser'); // parser for post requests
+var Conversation = require('watson-developer-cloud/conversation/v1'); // watson sdk
 
-console.log('APP - Running Local: ' + appEnv.isLocal);
-console.log('APP - App Name: ' + appEnv.name);
+var app = express();
 
-// load the services bound to this application
-var services = appEnv.getServices();
-var dbServiceName;
-//console.log(services);
-var count = 0;
-for (var serviceName in services) {
-  if (services.hasOwnProperty(serviceName)) {
-    count++;
-    var service = services[serviceName];
-    console.log('APP - Svc Name=' + service.name + ', Label=' + service.label);
-    if (service.label == "cloudantNoSQLDB") {
-      dbServiceName =  service.name;
+// Bootstrap application settings
+app.use(express.static('./public')); // load UI from public folder
+app.use(bodyParser.json());
+
+// Create the service wrapper
+var conversation = new Conversation({
+  // If unspecified here, the CONVERSATION_USERNAME and CONVERSATION_PASSWORD env properties will be checked
+  // After that, the SDK will fall back to the bluemix-provided VCAP_SERVICES environment property
+  // username: '<username>',
+  // password: '<password>',
+  url: 'https://gateway.watsonplatform.net/conversation/api',
+  version_date: '2016-10-21',
+  version: 'v1'
+});
+
+// Endpoint to be call from the client side
+app.post('/api/message', function(req, res) {
+  var workspace = process.env.WORKSPACE_ID || '<workspace-id>';
+  if (!workspace || workspace === '<workspace-id>') {
+    return res.json({
+      'output': {
+        'text': 'The app has not been configured with a <b>WORKSPACE_ID</b> environment variable. Please refer to the ' + '<a href="https://github.com/watson-developer-cloud/conversation-simple">README</a> documentation on how to set this variable. <br>' + 'Once a workspace has been defined the intents may be imported from ' + '<a href="https://github.com/watson-developer-cloud/conversation-simple/blob/master/training/car_workspace.json">here</a> in order to get a working application.'
+      }
+    });
+  }
+  var payload = {
+    workspace_id: workspace,
+    context: req.body.context || {},
+    input: req.body.input || {}
+  };
+
+  // Send the input to the conversation service
+  conversation.message(payload, function(err, data) {
+    if (err) {
+      return res.status(err.code || 500).json(err);
+    }
+    return res.json(updateMessage(payload, data));
+  });
+});
+
+/**
+ * Updates the response text using the intent confidence
+ * @param  {Object} input The request to the Conversation service
+ * @param  {Object} response The response from the Conversation service
+ * @return {Object}          The response with the updated message
+ */
+function updateMessage(input, response) {
+  var responseText = null;
+  if (!response.output) {
+    response.output = {};
+  } else {
+    return response;
+  }
+  if (response.intents && response.intents[0]) {
+    var intent = response.intents[0];
+    // Depending on the confidence of the response the app can return different messages.
+    // The confidence will vary depending on how well the system is trained. The service will always try to assign
+    // a class/intent to the input. If the confidence is low, then it suggests the service is unsure of the
+    // user's intent . In these cases it is usually best to return a disambiguation message
+    // ('I did not understand your intent, please rephrase your question', etc..)
+    if (intent.confidence >= 0.75) {
+      responseText = 'I understood your intent was ' + intent.intent;
+    } else if (intent.confidence >= 0.5) {
+      responseText = 'I think your intent was ' + intent.intent;
+    } else {
+      responseText = 'I did not understand your intent';
     }
   }
+  response.output.text = responseText;
+  return response;
 }
-if (!count) {
-  console.log('APP - No services are bound to this app.\n');
-}
 
-// expect a service whose name matches the regular expression
-//console.log('toto ' + appEnv.getServiceCreds(/cloudant/i));
-
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json()); // parse application/json
-
-require("./app/database.js")(appEnv, dbServiceName, "todos", 
-  function (err, database) {
-    if (err) {
-      console.log(err);
-    } else {
-      // database is initialized, install our CRUD route for Todo objects
-      require('./app/todos.js')(app, database);
-    }
-});
-
-// set the static files location /public/img will be /img for users
-app.use(express.static(__dirname + '/public'));
-app.use(favicon(__dirname + '/public/icons/favicon.ico'));
-
-// start server on the specified port and binding host
-app.listen(appEnv.port, "0.0.0.0", function () {
-  console.log("APP - Server starting on " + appEnv.url);
-});
+module.exports = app;

@@ -1,34 +1,41 @@
 {
-  "name": "node-todo",
-  "version": "0.0.0",
-  "description": "Bluemix Node.JS todo application.",
+  "name": "conversation-simple",
+  "description": "A simple Node.js based web app which shows how to use the Conversation API to recognize user intents.",
+  "version": "0.1.1",
+  "main": "server.js",
   "scripts": {
-    "start": "node app.js",
-    "postinstall": "bower install --allow-root"
+    "start": "node server.js",
+    "test-integration": "casperjs test ./test/integration/test.*.js",
+    "test-integration-runner": "NODE_ENV=test node casper-runner.js",
+    "test": "npm run lint && npm run test-unit && npm run test-integration-runner",
+    "test-unit": "istanbul cover ./node_modules/mocha/bin/_mocha test/unit",
+    "lint": "eslint .",
+    "autofix": "eslint --fix .",
+    "codecov": "npm run test && (codecov || true)"
   },
-  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/watson-developer-cloud/conversation-simple.git"
+  },
+  "license": "Apache-2.0",
   "dependencies": {
-    "async": "^1.5.2",
-    "body-parser": "~1.4.3",
-    "bower": "^1.7.7",
-    "cfenv": "^1.0.3",
-    "express": "~4.6.1",
-    "method-override": "~2.1.1",
-    "morgan": "~1.1.1",
-    "nano": "^6.2.0",
-    "serve-favicon": "^2.3.0"
+    "body-parser": "^1.15.2",
+    "dotenv": "^2.0.0",
+    "express": "^4.14.0",
+    "watson-developer-cloud": "^2.8.1"
   },
-  "eslintConfig": {
-    "env": {
-      "async": true,
-      "body-parser": true,
-      "bower": true,
-      "cfenv": true,
-      "express": true,
-      "method-override": true,
-      "morgan": true,
-      "nano": true,
-      "serve-favicon": true
-    }
+  "devDependencies": {
+    "babel-eslint": "^6.0.4",
+    "casperjs": "^1.1.3",
+    "codecov": "^1.0.1",
+    "eslint": "^2.8.0",
+    "istanbul": "^0.4.2",
+    "mocha": "^2.4.5",
+    "phantomjs-prebuilt": "^2.1.13",
+    "supertest": "^1.2.0"
+  },
+  "engine": {
+    "node": ">= 6.9.x",
+    "npm": "> 3.10.x"
   }
 }

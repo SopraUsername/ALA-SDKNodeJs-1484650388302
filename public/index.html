@@ -1,65 +1,44 @@
-<!DOCTYPE html>
-<html lang="fr" ng-app="todoApp">
-
+<html>
 <head>
-  <meta charset="utf-8" />
-
-  <!-- Optimize mobile viewport for responsive design -->
+  <base href="/">
+  <title>Conversation Chat App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <title>Todo</title>
-
-  <link rel="stylesheet" href="vendor/bootstrap/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="css/todo.css">
-  <link rel="stylesheet" href="vendor/font-awesome/css/font-awesome.min.css">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta property="og:image" content="conversation.svg" />
+  <meta property="og:title" content="Conversation Chat Simple" />
+  <meta property="og:description" content="Sample application that shows how to use the Conversation API to identify user intents" />
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="css/app.css">
 </head>
-
 <body>
-  <a href="https://github.com/lionelmace/mytodo">
-    <img style="position: absolute; top: 0; right: 0; border: 0;" src="icons/forkmeongithub.png" alt="Fork me on GitHub">
-  </a>
+  <div id="view-change-button" class="button" onclick="PayloadPanel.togglePanel(event, this)">
+    <img class="option full" src="../img/Chat Button.png">
+    <img class="option not-full" src="../img/Code Button.png">
+  </div>
+  <div id="contentParent" class="responsive-columns-wrapper">
+    <div id="chat-column-holder" class="responsive-column content-column">
+      <div class="chat-column">
+        <div id="scrollingChat"></div>
+        <label for="textInput" class="inputOutline">
+          <input id="textInput" class="input responsive-column"
+            placeholder="Type something" type="text"
+            onkeydown="ConversationPanel.inputKeyDown(event, this)">
+        </label>
+      </div>
+    </div>
+    <div id="payload-column" class="fixed-column content-column">
+      <div id="payload-initial-message">
+        Type something to see the output
+      </div>
+      <div id="payload-request" class="payload"></div>
+      <div id="payload-response" class="payload"></div>
+    </div>
+  </div>
 
-  <header>
-    <h1><img src="/icons/bmxlogo.png" width="200" height="47"/></h1>
-    <!-- Todo List</h1-->
-  </header>
-
-  <section ng-controller="todoCtrl">
-    <form id="todo-form" ng-submit="addTodo()">
-      <input id="new-todo" placeholder="Type a new todo" ng-model="newTodo.text" />
-    </form>
-
-    <article ng-show="todos.length">
-      <ul id="todo-list">
-        <li ng-repeat="todo in todos" ng-class="{completed: todo.completed}">
-          <div class="view">
-            <input class="mark" type="checkbox" ng-model="todo.completed" />
-            <span>{{todo.text}}</span>
-            <!--span class="close" ng-click="deleteTodo(todo)">x</span-->
-            <small><span class="glyphicon glyphicon-trash close" aria-hidden="true" ng-click="deleteTodo(todo)"></span></small>
-          </div>
-        </li>
-      </ul>
-      <input id="mark-all" type="checkbox" ng-model="allChecked" ng-click="markAll(allChecked)" />
-      <label class="btn btn-info" for="mark-all">Select All</label>
-      <button class="btn btn-danger" ng-click="clearCompletedTodos()">Clear selected</button>
-    </article>
-
-  </section>
-
-  <footer>
-    made by <a href="https://twitter.com/lionelmace">lionel</a> and <a href="https://twitter.com/l2fprod">fred</a>
-  </footer>
-
-  <script src="vendor/angular/angular.min.js"></script>
-
-  <!-- load our todo service -->
-  <script src="js/services/todo.service.js"></script>
-  <!-- load up our controller -->
-  <script src="js/controllers/todo.controller.js"></script>
-  <!-- load our main application -->
-  <script src="js/todo.js"></script>
-
+  <script src="js/common.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/conversation.js"></script>
+  <script src="js/payload.js"></script>
+  <script src="js/global.js"></script>
 </body>
-
 </html>

@@ -1,9 +1,15 @@
+---
+declared-services:
+  my-conversation-service:
+    label: conversation
+    plan: free
 applications:
-- path: .
+- name: conversation-simpleALA
+  command: npm start
+  path: .
   memory: 256M
   instances: 1
-  domain: mybluemix.net
-  manifest: sdk-for-nodejs
-  name: ALA-SDKNodeJs
-  host: ALA-SDKNodeJs
-  disk_quota: 1024M
+  services:
+  - my-conversation-service
+  env:
+    NPM_CONFIG_PRODUCTION: false
